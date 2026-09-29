@@ -1,0 +1,114 @@
+@import "tailwindcss";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
+
+/*
+  Design tokens — "Agenda viva"
+  Ink & paper como base neutra, esmeralda como cor de confiança/confirmação,
+  âmbar como cor de ação (agendar/horário), tijolo para estados negativos.
+*/
+@theme {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink-950: #10121A;
+  --color-ink-900: #171A23;
+  --color-ink-800: #262B38;
+  --color-ink-700: #2E3342;
+  --color-ink-600: #454C5F;
+  --color-ink-500: #5B6478;
+  --color-ink-400: #7C8598;
+  --color-ink-300: #A6ADBD;
+  --color-ink-200: #D3D7E0;
+  --color-ink-100: #E9EBF0;
+
+  --color-paper-100: #FAFAF8;
+  --color-paper-200: #F2F1EC;
+  --color-paper-300: #E8E6DD;
+
+  --color-emerald-700: #0B5548;
+  --color-emerald-600: #0F6B5C;
+  --color-emerald-500: #147E6C;
+  --color-emerald-100: #DCEFE9;
+  --color-emerald-50: #EFF7F4;
+
+  --color-amber-600: #D68C1F;
+  --color-amber-500: #F2A93B;
+  --color-amber-400: #F6BE64;
+  --color-amber-100: #FCEACA;
+  --color-amber-50: #FDF4E3;
+
+  --color-brick-600: #A5372F;
+  --color-brick-500: #C1443C;
+  --color-brick-100: #F7DEDC;
+  --color-brick-50: #FBEEEd;
+
+  --radius-card: 0.875rem;
+  --radius-chip: 0.625rem;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-paper-100);
+  color: var(--color-ink-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+}
+
+/* Numerais tabulares para horários — alinhamento visual consistente */
+.tabular-time {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+::selection {
+  background-color: var(--color-amber-200, #f6be64);
+  color: var(--color-ink-950);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-emerald-600);
+  outline-offset: 2px;
+}
+
+/* scrollbar discreta para trilhos de horários/dias */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: var(--color-ink-200);
+  border-radius: 999px;
+}
+
+/* Animações (Tailwind v4 não traz utilitários de entrada por padrão) */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+.animate-toast-in { animation: toast-in 180ms ease-out; }
+.animate-sheet-in { animation: sheet-in 200ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
