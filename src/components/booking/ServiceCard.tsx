@@ -30,7 +30,7 @@ export function ServiceCard({ service, onSelect, selected = false }: ServiceCard
       </div>
       {isInteractive && (
         <ChevronRight
-          className={['size-5 shrink-0', selected ? 'text-emerald-600' : 'text-ink-300'].join(' ')}
+          className={['size-5 shrink-0 print:hidden', selected ? 'text-emerald-600' : 'text-ink-300'].join(' ')}
         />
       )}
     </>

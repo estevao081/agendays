@@ -8,3 +8,4 @@ export * from './Toast';
 export * from './Modal';
 export * from './Switch';
 export * from './Textarea';
+export * from './QrCode';

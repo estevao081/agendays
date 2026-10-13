@@ -9,7 +9,7 @@ import type { Provider } from '../../types';
 const TIPS = [
   { icon: MessageCircle, title: 'Mande no WhatsApp', text: 'Envie o link para clientes fiéis e deixe o próprio cliente escolher o horário.' },
   { icon: AtSign, title: 'Coloque na bio do Instagram', text: 'Um único link na bio e seus seguidores já conseguem agendar.' },
-  { icon: QrCode, title: 'Divulgue no balcão', text: 'Imprima o link (ou um QR Code gerado a partir dele) e deixe visível no estabelecimento.' },
+  { icon: QrCode, title: 'Divulgue no balcão', text: 'Abra sua página e clique em Imprimir: os links viram QR Codes para o cliente apontar a câmera.' },
 ];
 
 export function LinkSharingPage() {

@@ -13,6 +13,9 @@ import { ServicesPage } from '../pages/dashboard/ServicesPage';
 import { AvailabilityPage } from '../pages/dashboard/AvailabilityPage';
 import { ProfilePage } from '../pages/dashboard/ProfilePage';
 import { LinkSharingPage } from '../pages/dashboard/LinkSharingPage';
+import { AppointmentsPage } from '../pages/dashboard/AppointmentsPage';
+import { EarningsPage } from '../pages/dashboard/EarningsPage';
+import { SubscriptionPage } from '../pages/dashboard/SubscriptionPage';
 
 import { ProviderPublicPage } from '../pages/public/ProviderPublicPage';
 import { BookingFlowPage } from '../pages/public/BookingFlowPage';
@@ -38,6 +41,16 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <OverviewPage />, handle: { title: 'Visão geral' } },
           {
+            path: 'agendamentos',
+            element: <AppointmentsPage />,
+            handle: { title: 'Agendamentos' },
+          },
+          {
+            path: 'ganhos',
+            element: <EarningsPage />,
+            handle: { title: 'Ganhos' },
+          },
+          {
             path: 'servicos',
             element: <ServicesPage />,
             handle: { title: 'Serviços' },
@@ -52,6 +65,11 @@ export const routes: RouteObject[] = [
             path: 'link',
             element: <LinkSharingPage />,
             handle: { title: 'Seu link' },
+          },
+          {
+            path: 'assinatura',
+            element: <SubscriptionPage />,
+            handle: { title: 'Assinatura' },
           },
         ],
       },

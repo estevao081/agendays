@@ -17,8 +17,6 @@ export interface DashboardOverviewData {
   serviceNameById: Map<string, string>;
 }
 
-const ACTIVE_STATUSES = new Set(['agendado', 'confirmado']);
-
 export function useDashboardOverview(providerId: string | undefined): DashboardOverviewData {
   const [isLoading, setIsLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -27,7 +25,15 @@ export function useDashboardOverview(providerId: string | undefined): DashboardO
   const [reloadKey, setReloadKey] = useState(0);
 
   // um novo agendamento (mesma aba ou outra) gera uma notificação: recarrega os dados
-  useEffect(() => notificationService.subscribe(() => setReloadKey((k) => k + 1)), []);
+  useEffect(() => {
+    const reload = () => setReloadKey((k) => k + 1);
+    const offNotifications = notificationService.subscribe(reload);
+    const offAppointments = appointmentService.onChange(reload);
+    return () => {
+      offNotifications();
+      offAppointments();
+    };
+  }, []);
 
   useEffect(() => {
     if (!providerId) return;
@@ -53,13 +59,10 @@ export function useDashboardOverview(providerId: string | undefined): DashboardO
   const today = format(new Date(), 'yyyy-MM-dd');
   const nowTime = format(new Date(), 'HH:mm');
 
-  const todayCount = appointments.filter(
-    (a) => a.date === today && a.status !== 'cancelado'
-  ).length;
+  const todayCount = appointments.filter((a) => a.date === today).length;
 
   const upcoming = appointments
     .filter((a) => {
-      if (!ACTIVE_STATUSES.has(a.status)) return false;
       if (a.date > today) return true;
       if (a.date === today) return a.time >= nowTime;
       return false;

@@ -9,19 +9,16 @@ async function goTo(user: ReturnType<typeof userEvent.setup>, linkName: string) 
 }
 
 describe('Jornada do prestador', () => {
-  it('cadastro → dashboard → serviços → horários → perfil → link → logout', async () => {
+  it('login → dashboard → serviços → horários → perfil → link → logout', async () => {
     const user = userEvent.setup();
-    const router = renderApp('/cadastro');
+    const router = renderApp('/login');
 
-    // ---------- Cadastro ----------
-    await user.type(screen.getByLabelText('Nome'), 'Ana Souza');
-    await user.type(screen.getByLabelText('E-mail'), 'ana@studio.com');
-    await user.type(screen.getByLabelText('Senha'), 'segredo123');
-    await user.type(screen.getByLabelText('Confirmar senha'), 'segredo123');
-    await user.click(screen.getByRole('button', { name: 'Criar conta' }));
+    // ---------- Login (conta de demonstração com serviços de exemplo) ----------
+    await user.type(screen.getByLabelText('Senha'), '123456');
+    await user.click(screen.getByRole('button', { name: 'Entrar' }));
 
     // ---------- Dashboard ----------
-    expect(await screen.findByText(/Olá, Ana/, {}, WAIT)).toBeInTheDocument();
+    expect(await screen.findByText(/Olá, Fulano/, {}, WAIT)).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/dashboard');
     const servicesLabel = screen.getByText('Serviços cadastrados');
     expect(within(servicesLabel.parentElement!).getByText('3')).toBeInTheDocument();
@@ -184,6 +181,7 @@ describe('Jornada do prestador', () => {
     const user = userEvent.setup();
     const router = renderApp('/cadastro');
     await user.type(screen.getByLabelText('Nome'), 'Bia');
+    await user.type(screen.getByLabelText('Nome do estabelecimento'), 'Studio Bia');
     await user.type(screen.getByLabelText('E-mail'), 'bia@x.com');
     await user.type(screen.getByLabelText('Senha'), 'abcdef');
     await user.type(screen.getByLabelText('Confirmar senha'), 'abcdeX');

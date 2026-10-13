@@ -17,6 +17,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { providerService } from '../../services/providerService';
 import { serviceService } from '../../services/serviceService';
 import { availabilityService } from '../../services/availabilityService';
+import { billingService } from '../../services/billingService';
 import { appointmentService } from '../../services/appointmentService';
 import { whatsappNotificationService } from '../../services/whatsappNotificationService';
 
@@ -38,6 +39,7 @@ export function BookingFlowPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [availability, setAvailability] = useState<AvailabilitySettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [acceptingBookings, setAcceptingBookings] = useState(true);
 
   const [step, setStep] = useState(1);
   const [serviceId, setServiceId] = useState<string | null>(preselectedServiceId ?? null);
@@ -60,6 +62,11 @@ export function BookingFlowPage() {
         return;
       }
       setProvider(found);
+      if (!(await billingService.hasAccess(found.id))) {
+        setAcceptingBookings(false);
+        setIsLoading(false);
+        return;
+      }
       const [svcs, avail] = await Promise.all([
         serviceService.listByProvider(found.id),
         availabilityService.get(found.id),
@@ -83,7 +90,7 @@ export function BookingFlowPage() {
     setIsLoadingSlots(true);
     appointmentService.listByProviderAndDate(provider.id, date).then((appts) => {
       setOccupiedTimes(
-        appts.filter((a) => a.status !== 'cancelado').map((a) => a.time)
+        appts.map((a) => a.time)
       );
       setIsLoadingSlots(false);
     });
@@ -177,6 +184,14 @@ export function BookingFlowPage() {
     return (
       <div className="p-6">
         <EmptyState title="Página não encontrada" description="Este link de agendamento não existe." />
+      </div>
+    );
+  }
+
+  if (!acceptingBookings) {
+    return (
+      <div className="p-6">
+        <EmptyState title="Agendamento indisponível" description={`${provider.businessName} não está recebendo agendamentos online no momento.`} />
       </div>
     );
   }

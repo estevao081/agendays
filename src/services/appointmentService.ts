@@ -1,58 +1,35 @@
-import type { Appointment, AppointmentInput, AppointmentStatus } from '../types';
+import type { Appointment, AppointmentInput } from '../types';
 import { mockAppointments } from '../mocks/appointments';
+import { mockServices } from '../mocks/services';
+import { loadJson, saveJson } from './storage';
 import { delay, generateId } from './utils';
 
 const CREATED_KEY = 'agendasys:appointments:created';
-const STATUS_KEY = 'agendasys:appointments:status';
+const DELETED_KEY = 'agendasys:appointments:deleted';
 
 /**
- * Persistência mockada: os agendamentos criados e as mudanças de status ficam
+ * Persistência mockada: os agendamentos criados e os ids dos excluídos ficam
  * no localStorage, para sobreviverem a recarregamentos e serem compartilhados
  * entre abas (ex.: cliente agenda numa aba e o prestador vê na outra).
  * Os agendamentos de exemplo (`mockAppointments`) são gerados a cada carga,
- * sempre relativos à data de hoje. Sem localStorage (ex.: testes em Node),
- * cai para memória. Uma API real substitui tudo isso.
+ * sempre relativos à data de hoje. Uma API real substitui tudo isso.
  */
-const memory: { created: Appointment[]; status: Record<string, AppointmentStatus> } = {
-  created: [],
-  status: {},
-};
+const readCreated = (): Appointment[] => loadJson<Appointment[]>(CREATED_KEY, []);
+const readDeleted = (): string[] => loadJson<string[]>(DELETED_KEY, []);
 
-function hasStorage(): boolean {
-  try {
-    return typeof localStorage !== 'undefined';
-  } catch {
-    return false;
-  }
-}
-
-function readJson<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-const readCreated = (): Appointment[] => (hasStorage() ? readJson(CREATED_KEY, []) : memory.created);
-const readStatus = (): Record<string, AppointmentStatus> =>
-  hasStorage() ? readJson(STATUS_KEY, {}) : memory.status;
-
-function writeCreated(list: Appointment[]) {
-  if (hasStorage()) localStorage.setItem(CREATED_KEY, JSON.stringify(list));
-  else memory.created = list;
-}
-function writeStatus(map: Record<string, AppointmentStatus>) {
-  if (hasStorage()) localStorage.setItem(STATUS_KEY, JSON.stringify(map));
-  else memory.status = map;
-}
+const listeners = new Set<() => void>();
+const notify = () => listeners.forEach((cb) => cb());
 
 function all(): Appointment[] {
-  const status = readStatus();
-  return [...mockAppointments, ...readCreated()].map((a) =>
-    status[a.id] ? { ...a, status: status[a.id] } : a
-  );
+  const deleted = new Set(readDeleted());
+  return [...mockAppointments, ...readCreated()]
+    .filter((a) => !deleted.has(a.id))
+    .map((a) => {
+      if (typeof a.price === 'number') return a;
+      // agendamento salvo antes de existir o preço congelado: usa o preço atual do serviço
+      const service = mockServices.find((s) => s.id === a.serviceId);
+      return { ...a, price: service?.price ?? 0, serviceName: a.serviceName ?? service?.name ?? 'Serviço' };
+    });
 }
 
 export const appointmentService = {
@@ -68,31 +45,53 @@ export const appointmentService = {
     // Regra de negócio que a API real também deve garantir no servidor:
     // dois clientes não podem ocupar o mesmo horário.
     const conflict = all().some(
-      (a) =>
-        a.providerId === input.providerId &&
-        a.date === input.date &&
-        a.time === input.time &&
-        a.status !== 'cancelado'
+      (a) => a.providerId === input.providerId && a.date === input.date && a.time === input.time
     );
     if (conflict) {
       await delay(null, 300);
       throw new Error('Este horário acabou de ser ocupado. Escolha outro horário.');
     }
 
+    // O preço vem do serviço (no servidor), nunca do cliente, e fica registrado
+    // no agendamento: é a base do cálculo de ganhos.
+    const service = mockServices.find((s) => s.id === input.serviceId && s.providerId === input.providerId);
+    if (!service) throw new Error('Serviço não encontrado.');
+
     const appointment: Appointment = {
       id: generateId('appt'),
-      status: 'agendado',
       createdAt: new Date().toISOString(),
+      price: service.price,
+      serviceName: service.name,
       ...input,
     };
-    writeCreated([...readCreated(), appointment]);
+    saveJson(CREATED_KEY, [...readCreated(), appointment]);
+    notify();
     return delay(appointment, 600);
   },
 
-  async updateStatus(id: string, status: AppointmentStatus): Promise<Appointment> {
+  /**
+   * Exclui o agendamento (ex.: cliente avisou que não vai comparecer e não
+   * quer remarcar). O horário volta a ficar livre e o valor deixa de entrar nos ganhos.
+   */
+  async remove(id: string): Promise<void> {
     const appointment = all().find((a) => a.id === id);
     if (!appointment) throw new Error('Agendamento não encontrado.');
-    writeStatus({ ...readStatus(), [id]: status });
-    return delay({ ...appointment, status });
+    saveJson(CREATED_KEY, readCreated().filter((a) => a.id !== id));
+    saveJson(DELETED_KEY, [...readDeleted(), id]);
+    notify();
+    return delay(undefined);
+  },
+
+  /** Avisa quando algum agendamento muda (nesta aba ou em outra). */
+  onChange(callback: () => void): () => void {
+    listeners.add(callback);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === CREATED_KEY || e.key === DELETED_KEY || e.key === null) callback();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => {
+      listeners.delete(callback);
+      window.removeEventListener('storage', onStorage);
+    };
   },
 };

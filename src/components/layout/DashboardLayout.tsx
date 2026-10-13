@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { Outlet, useMatches } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useMatches } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { SubscriptionBanner } from './SubscriptionBanner';
+import { Spinner } from '../ui/Spinner';
+import { useSubscription } from '../../hooks/useSubscription';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../hooks/useToast';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -15,6 +18,9 @@ export function DashboardLayout() {
   useDocumentTitle(`${title} · agendasys`);
 
   const { user } = useAuth();
+  const location = useLocation();
+  const { summary, isLoading: isLoadingSubscription } = useSubscription(user?.providerId);
+  const onBillingPage = location.pathname === '/dashboard/assinatura';
   const { showToast } = useToast();
   const seenIds = useRef<Set<string> | null>(null);
 
@@ -55,7 +61,17 @@ export function DashboardLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Header title={title} />
         <main id="conteudo" tabIndex={-1} className="flex-1 outline-none px-4 py-6 sm:px-6 lg:px-8">
-          <Outlet />
+          {isLoadingSubscription ? (
+            <Spinner label="Carregando…" />
+          ) : summary && !summary.hasAccess && !onBillingPage ? (
+            // assinatura vencida: só a tela de assinatura fica acessível
+            <Navigate to="/dashboard/assinatura" replace />
+          ) : (
+            <>
+              {summary && !onBillingPage && <SubscriptionBanner summary={summary} />}
+              <Outlet />
+            </>
+          )}
         </main>
       </div>
     </div>

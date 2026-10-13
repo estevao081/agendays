@@ -5,7 +5,7 @@ import { generateTimeSlots } from '../src/utils/slotGenerator';
 const results: string[] = [];
 const check = (name: string, ok: boolean) => results.push(`${ok ? 'PASS' : 'FAIL'} - ${name}`);
 
-const occupied = mockAppointments.find((a) => a.status !== 'cancelado')!;
+const occupied = mockAppointments[0]!;
 const base = { providerId: 'prov-1', serviceId: 'svc-1', clientName: 'Teste', date: occupied.date, time: occupied.time };
 
 // 1. horário já ocupado deve ser rejeitado
@@ -15,21 +15,21 @@ catch { check('rejeita horário ocupado', true); }
 // 2. horário livre é aceito; segunda tentativa no mesmo horário é rejeitada
 const free = { ...base, time: '17:30' };
 const created = await appointmentService.create(free);
-check('aceita horário livre', created.status === 'agendado');
+check('aceita horário livre', created.time === '17:30');
 try { await appointmentService.create(free); check('rejeita agendamento duplo', false); }
 catch { check('rejeita agendamento duplo', true); }
 
-// 3. cancelar libera o horário
-await appointmentService.updateStatus(created.id, 'cancelado');
-try { await appointmentService.create(free); check('cancelado libera o horário', true); }
-catch { check('cancelado libera o horário', false); }
+// 3. excluir o agendamento libera o horário
+await appointmentService.remove(created.id);
+try { await appointmentService.create(free); check('excluir libera o horário', true); }
+catch { check('excluir libera o horário', false); }
 
 // 4. slots com ocupados marcados como indisponíveis
 const day = await appointmentService.listByProviderAndDate('prov-1', occupied.date);
 const slots = generateTimeSlots({
   periods: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }],
   slotIntervalMinutes: 30,
-  occupiedTimes: day.filter((a) => a.status !== 'cancelado').map((a) => a.time),
+  occupiedTimes: day.map((a) => a.time),
 });
 check('almoço 12:00-14:00 não gera horários', !slots.some((s) => s.time >= '12:00' && s.time < '14:00'));
 check('horário ocupado vem indisponível', slots.find((s) => s.time === occupied.time)?.available === false);

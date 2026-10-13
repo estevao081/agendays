@@ -120,7 +120,7 @@ describe('Fluxo de agendamento do cliente', () => {
     expect(screen.getByText(/Cliente: João Silva/)).toBeInTheDocument();
 
     const saved = await appointmentService.listByProviderAndDate('prov-1', iso);
-    expect(saved.some((a) => a.clientName === 'João Silva' && a.time === '17:30' && a.status === 'agendado')).toBe(true);
+    expect(saved.some((a) => a.clientName === 'João Silva' && a.time === '17:30')).toBe(true);
     const notifs = notificationService.listByProvider('prov-1');
     expect(notifs[0]).toMatchObject({ clientName: 'João Silva', serviceName: 'Barba', time: '17:30', read: false });
 

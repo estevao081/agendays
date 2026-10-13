@@ -6,3 +6,4 @@ export * from './AvailabilityDayCard';
 export * from './ProfilePreviewCard';
 export * from './AvatarUploader';
 export * from './ShareLinkCard';
+export * from './DeleteAppointmentDialog';

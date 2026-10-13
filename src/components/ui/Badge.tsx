@@ -1,5 +1,4 @@
 import type { HTMLAttributes } from 'react';
-import type { AppointmentStatus } from '../../types';
 
 type BadgeTone = 'emerald' | 'amber' | 'brick' | 'ink';
 
@@ -25,16 +24,4 @@ export function Badge({ tone = 'ink', className = '', ...props }: BadgeProps) {
       {...props}
     />
   );
-}
-
-const STATUS_CONFIG: Record<AppointmentStatus, { label: string; tone: BadgeTone }> = {
-  agendado: { label: 'Agendado', tone: 'amber' },
-  confirmado: { label: 'Confirmado', tone: 'emerald' },
-  concluido: { label: 'Concluído', tone: 'ink' },
-  cancelado: { label: 'Cancelado', tone: 'brick' },
-};
-
-export function AppointmentStatusBadge({ status }: { status: AppointmentStatus }) {
-  const config = STATUS_CONFIG[status];
-  return <Badge tone={config.tone}>{config.label}</Badge>;
 }
